@@ -1,5 +1,3 @@
-#![allow(dead_code)] // REMOVE THIS LINE after fully implementing this functionality
-
 use std::{
     collections::BTreeMap, ops::Bound, os::unix::fs::MetadataExt, path::Path, sync::Arc,
     time::Duration,
@@ -370,7 +368,7 @@ pub fn check_compaction_ratio(storage: Arc<MiniLsm>) {
             max_size_amplification_percent,
             size_ratio,
             min_merge_width,
-            max_merge_width,
+            ..
         }) => {
             let size_ratio_trigger = (100.0 + size_ratio as f64) / 100.0;
             assert_eq!(l0_sst_num, 0);
