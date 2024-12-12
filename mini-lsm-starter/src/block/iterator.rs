@@ -15,10 +15,12 @@ pub struct BlockIterator {
     /// Current index of the key-value pair, should be in range of [0, num_of_elements)
     idx: usize,
     /// The first key in the block
+    #[allow(dead_code)]
     first_key: KeyVec,
 }
 
 impl BlockIterator {
+    #[allow(dead_code)]
     fn new(block: Arc<Block>) -> Self {
         Self {
             block,
@@ -54,45 +56,9 @@ impl BlockIterator {
 
     /// Creates a block iterator and seek to the first key that >= `key`.
     pub fn create_and_seek_to_key(block: Arc<Block>, key: KeySlice) -> Self {
-        let key_length = &block.data[0..SIZE_OF_U16];
-        let key_length = u16::from_be_bytes(key_length.try_into().unwrap()) as usize;
-
-        let first_key =
-            KeyVec::from_vec(block.data[SIZE_OF_U16..(key_length + SIZE_OF_U16)].to_vec());
-
-        let value_length = &block.data[(key_length + SIZE_OF_U16)..(key_length + SIZE_OF_U16 * 2)];
-        let value_length = u16::from_be_bytes(value_length.try_into().unwrap()) as usize;
-
-        let mut idx = 1;
-        let mut current_key = first_key.clone();
-        let mut current_key_position = key_length;
-        let mut current_value_length = value_length;
-
-        while first_key.as_key_slice() < key {
-            let key_length = &block.data[(current_key_position + SIZE_OF_U16 * 2)..SIZE_OF_U16];
-            current_key_position = u16::from_be_bytes(key_length.try_into().unwrap()) as usize;
-
-            current_key = KeyVec::from_vec(
-                block.data[SIZE_OF_U16..(current_key_position + SIZE_OF_U16)].to_vec(),
-            );
-
-            let value_length = &block.data
-                [(current_key_position + SIZE_OF_U16)..(current_key_position + SIZE_OF_U16 * 2)];
-            current_value_length = u16::from_be_bytes(value_length.try_into().unwrap()) as usize;
-
-            idx += 1;
-        }
-
-        BlockIterator {
-            block,
-            key: current_key,
-            value_range: (
-                current_key_position + SIZE_OF_U16 * 2,
-                current_key_position + SIZE_OF_U16 * 2 + current_value_length,
-            ),
-            idx: idx - 1,
-            first_key,
-        }
+        let mut iterator = BlockIterator::create_and_seek_to_first(block);
+        iterator.seek_to_key(key);
+        iterator
     }
 
     /// Returns the key of the current entry.
