@@ -1,6 +1,5 @@
-#![allow(unused_variables)] // TODO(you): remove this lint after implementing this mod
-#![allow(dead_code)] // TODO(you): remove this lint after implementing this mod
-
+#[allow(dead_code)] // TODO: Delete
+#[allow(unused_variables)] // TODO: Delete
 pub(crate) mod bloom;
 mod builder;
 mod iterator;
@@ -119,6 +118,7 @@ pub struct SsTable {
     block_cache: Option<Arc<BlockCache>>,
     first_key: KeyBytes,
     last_key: KeyBytes,
+    #[allow(dead_code)] // TODO: Delete
     pub(crate) bloom: Option<Bloom>,
     /// The maximum timestamp stored in this SST, implemented in week 3.
     max_ts: u64,
@@ -187,26 +187,30 @@ impl SsTable {
             .get(block_idx)
             .map_or(self.block_meta_offset, |meta| meta.offset);
 
-        let block_length = next_offset - offset - SIZE_OF_U32;
-
         let data = self
             .file
             .read(offset as u64, (next_offset - offset) as u64)?;
-
-        let block = &data[..block_length];
 
         Ok(Arc::new(Block::decode(&data)))
     }
 
     /// Read a block from disk, with block cache. (Day 4)
     pub fn read_block_cached(&self, block_idx: usize) -> Result<Arc<Block>> {
-        unimplemented!()
+        match &self.block_cache {
+            Some(cache) => {
+                match cache.try_get_with((self.id, block_idx), || self.read_block(block_idx)) {
+                    Ok(block) => Ok(block),
+                    Err(e) => Err(Arc::try_unwrap(e).unwrap()),
+                }
+            }
+            None => self.read_block(block_idx),
+        }
     }
 
     /// Find the block that may contain `key`.
     /// Note: You may want to make use of the `first_key` stored in `BlockMeta`.
     /// You may also assume the key-value pairs stored in each consecutive block are sorted.
-    pub fn find_block_idx(&self, key: KeySlice) -> usize {
+    pub fn find_block_idx(&self, _key: KeySlice) -> usize {
         unimplemented!()
     }
 
